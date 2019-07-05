@@ -1,0 +1,217 @@
+#lang pie
+
+;racket -l pie -it play.pie
+
+(claim + (-> Nat Nat Nat))
+(define +
+  (lambda (a b)
+    (iter-Nat a
+      b
+      (lambda (n) (add1 n)))))
+
+(claim gauss (-> Nat Nat))
+(define gauss
+  (lambda (n)
+    (rec-Nat n
+      0
+      (lambda (prevn prevgauss)
+        (+ (add1 prevn) prevgauss)))))
+
+
+(claim * (-> Nat Nat Nat))
+(define *
+  (lambda (i j)
+    (iter-Nat i
+      0
+      (lambda (prev) (+ prev j)))))
+
+(claim length
+  (Pi ((T U))
+  (-> (List T) Nat)))
+(define length
+  (lambda (T l)
+    (rec-List l 0 (lambda (e es n) (add1 n)))))
+
+
+
+
+(claim step-append
+  (Pi ((E U))
+    (-> E (List E) (List E)
+        (List E))))
+(define step-append
+  (lambda (E)
+    (lambda (e es appendes)
+      (:: e appendes))))
+(claim append
+  (Pi ((E U))
+    (-> (List E) (List E)
+        (List E))))
+(define append
+  (lambda (E l r)
+    (rec-List
+      l
+      r
+      (step-append E))))
+
+(claim snoc
+  (Pi ((E U))
+    (-> (List E) E (List E))))
+(define snoc
+  (lambda (E)
+    (lambda (start new)
+    (rec-List start
+      (:: new nil)
+      (step-append E)))))
+
+(claim step-reverse
+  (Pi ((E U))
+    (-> E (List E) (List E)
+        (List E))))
+(define step-reverse
+  (lambda (E e es result)
+    (snoc E result e)))
+
+(claim reverse
+  (Pi ((E U))
+    (-> (List E) (List E))))
+(define reverse
+  (lambda (E target)
+    (rec-List target
+      (the (List E) nil)
+      (step-reverse E))))
+
+(claim mot-peas
+  (-> Nat U))
+(define mot-peas
+  (lambda (len) (Vec Atom len)))
+
+(claim step-peas
+  (Pi ((l-1 Nat))
+    (-> (mot-peas l-1)
+        (mot-peas (add1 l-1)))))
+(define step-peas
+  (lambda (l-1)
+    (lambda (prev)
+      (vec:: 'pea prev))))
+
+(claim peas
+  (Pi ((len Nat))
+    (Vec Atom len)))
+(define peas
+  (lambda (len)
+    (ind-Nat
+      len
+      mot-peas
+      vecnil
+      step-peas)))
+
+
+(claim also-rec-Nat
+  (Pi ((X U))
+    (-> Nat X (-> Nat X X) X)))
+(define also-rec-Nat
+  (lambda (X target base step)
+    (ind-Nat target
+      (lambda (n) X)
+      base
+      step)))
+
+
+(claim first
+  (Pi ((E U) (len-1 Nat))
+    (-> (Vec E (add1 len-1)) E)))
+(define first
+  (lambda (E len-1 list)
+    (head list)))
+
+(claim base-last
+  (Pi ((E U))
+    (-> (Vec E (add1 zero))
+        E)))
+(define base-last
+  (lambda (E v)
+    (head v)))
+
+(claim mot-last
+  (Pi ((E U) (n Nat)) U))
+(define mot-last
+  (lambda (E n)
+    (-> (Vec E (add1 n)) E)))
+(claim step-last
+  (Pi ((E U) (n-1 Nat))
+    (-> (mot-last E n-1)
+        (mot-last E (add1 n-1)))))
+(define step-last
+  (lambda (E)
+    (lambda (n-1 prevlaster)
+      (lambda (vec) (prevlaster (tail vec))))))
+
+(claim last
+  (Pi ((E U) (len-1 Nat))
+    (-> (Vec E (add1 len-1)) E)))
+(define last
+  (lambda (E len-1 es)
+    ((ind-Nat
+      len-1
+      (mot-last E)
+      (base-last E)
+      (step-last E)) es)))
+
+
+
+
+(claim drop-last
+  (Pi ((E U)
+       (l-1 Nat))
+    (-> (Vec E (add1 l-1))
+        (Vec E l-1))))
+
+(claim base-drop-last
+  (Pi ((E U))
+    (-> (Vec E 1)
+        (Vec E 0))))
+(define base-drop-last
+  (lambda (E l) vecnil))
+
+(claim mot-drop-last
+  (-> U Nat
+      U))
+(define mot-drop-last
+  (lambda (E n)
+    (-> (Vec E (add1 n))
+        (Vec E n))))
+
+(claim step-drop-last
+  (Pi ((E U) (l-1 Nat))
+    (-> (mot-drop-last E l-1)
+        (mot-drop-last E (add1 l-1)))))
+(define step-drop-last
+  (lambda (E n)
+    (lambda (drop-1-less)
+      (lambda (v)
+        (vec:: (head v) (drop-1-less (tail v)))))))
+
+(define drop-last
+  (lambda (E l)
+    (ind-Nat l
+      (mot-drop-last E)
+      (base-drop-last E)
+      (step-drop-last E))))
+
+
+
+
+
+
+(peas 12)
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,79 @@
+#lang pie
+
+
+;; Ch 7, drop
+
+(claim mot-range (-> Nat U))
+(define mot-range
+   (lambda (n) (Vec Nat n)))
+
+(claim step-range
+    (Pi ((n-1 Nat))
+        (-> (mot-range n-1)
+            (mot-range (add1 n-1)))))
+(define step-range
+  (lambda (n-1 almost)
+    (vec:: (add1 n-1) almost)))
+
+(claim range
+  (Pi ((n Nat)) (Vec Nat n)))
+(define range
+  (lambda (n)
+    (ind-Nat n
+        mot-range
+        vecnil
+        step-range)))
+
+(claim mot-last
+  (-> U Nat U))
+(define mot-last
+  (lambda (e l-1)
+    (-> (Vec e (add1 l-1)) e)))
+
+(claim step-last
+  (Pi ((E U) (n-1 Nat))
+    (-> (mot-last E n-1) (mot-last E (add1 n-1)))))
+(define step-last
+  (lambda (e n-1 almost)
+    (lambda (lis) (almost (tail lis)))))
+
+(claim last
+  (Pi ((E U) (l-1 Nat))
+      (mot-last E l-1)))
+(define last
+  (lambda (e l-1)
+    (ind-Nat l-1
+             (mot-last e)
+             (lambda (l) (head l))
+             (step-last e))))
+
+
+(claim mot-drop
+  (-> U Nat U))
+(define mot-drop
+  (lambda (e l-1)
+    (-> (Vec e (add1 l-1)) (Vec e l-1))))
+
+(claim step-drop
+  (Pi ((E U) (l-1 Nat))
+    (-> (mot-drop E l-1) (mot-drop E (add1 l-1)))))
+(define step-drop
+  (lambda (e)
+    (lambda (l-1 almost)
+      (lambda (lis) (vec:: (head lis) (almost (tail lis)))))))
+
+
+(claim drop
+  (Pi ((E U) (l Nat))
+    (-> (Vec E (add1 l)) (Vec E l))))
+(define drop
+  (lambda (e l-1)
+    (ind-Nat l-1
+             (mot-drop e)
+             (lambda (l) vecnil)
+             (step-drop e))))
+
+
+
+(drop Nat 4 (range 5))
+(last Nat 4 (range 5))
